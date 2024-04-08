@@ -4,6 +4,9 @@ export default {
   component: Task,
   title: "Task",
   tags: ["autodocs"],
+};
+
+export const Default = {
   args: {
     task: {
       id: "1",
@@ -13,11 +16,10 @@ export default {
   },
 };
 
-export const Default = {};
-
 export const Pinned = {
   args: {
     task: {
+      ...Default.args.task,
       state: "TASK_PINNED",
     },
   },
@@ -26,6 +28,7 @@ export const Pinned = {
 export const Archived = {
   args: {
     task: {
+      ...Default.args.task,
       state: "TASK_ARCHIVED",
     },
   },
