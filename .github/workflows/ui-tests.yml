@@ -6,19 +6,26 @@ on: push
 
 # List of jobs
 jobs:
-  install-deps:
+  yarn_cache_dir:
     runs-on: ubuntu-latest
+    outputs:
+      yarn_cache_dir: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+    steps:
+      - id: yarn-cache-dir-path
+        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+  install-deps:
+    needs: yarn_cache_dir
+    runs-on: ubuntu-latest
+    outputs:
+      yarn_cache_dir: ${{ needs.yarn_cache_dir.outputs.yarn_cache_dir }}
     steps:
       - uses: actions/checkout@v2
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
       - name: Cache deps
         uses: actions/cache@v2
         id: yarn-cache
         with:
           path: |
-            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            ${{ needs.yarn_cache_dir.outputs.yarn_cache_dir }}
             ~/.cache/Cypress
           key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
           restore-keys: yarn-v1-
@@ -39,7 +46,7 @@ jobs:
         id: yarn-cache
         with:
           path: |
-            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            ${{ needs.install-deps.outputs.yarn_cache_dir }}
             ~/.cache/Cypress
           key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
           restore-keys: yarn-v1-
@@ -63,7 +70,7 @@ jobs:
         id: yarn-cache
         with:
           path: |
-            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            ${{ needs.install-deps.outputs.yarn_cache_dir }}
             ~/.cache/Cypress
           key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
           restore-keys: yarn-v1-
@@ -81,7 +88,7 @@ jobs:
         id: yarn-cache
         with:
           path: |
-            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            ${{ needs.install-deps.outputs.yarn_cache_dir }}
             ~/.cache/Cypress
           key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
           restore-keys: yarn-v1-
