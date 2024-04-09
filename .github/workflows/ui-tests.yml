@@ -13,7 +13,7 @@ jobs:
     steps:
       - id: yarn-cache-dir-path
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-  install-deps:
+  cache-deps:
     needs: yarn_cache_dir
     runs-on: ubuntu-latest
     outputs:
@@ -29,12 +29,10 @@ jobs:
             ~/.cache/Cypress
           key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
           restore-keys: yarn-v1-
-      - name: Install deps
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn
+      - run: yarn --frozen-lockfile
 
   interaction-and-accessibility:
-    needs: install-deps
+    needs: cache-deps
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -46,10 +44,11 @@ jobs:
         id: yarn-cache
         with:
           path: |
-            ${{ needs.install-deps.outputs.yarn_cache_dir }}
+            ${{ needs.cache-deps.outputs.yarn_cache_dir }}
             ~/.cache/Cypress
           key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
           restore-keys: yarn-v1-
+      - run: yarn --frozen-lockfile
       - name: Install Playwright
         run: npx playwright install --with-deps
       - name: Build Storybook
@@ -59,7 +58,7 @@ jobs:
           "npx http-server storybook-static --port 6006 --silent"
           "npx wait-on tcp:6006 && yarn test-storybook"
   visual:
-    needs: install-deps
+    needs: cache-deps
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -70,16 +69,17 @@ jobs:
         id: yarn-cache
         with:
           path: |
-            ${{ needs.install-deps.outputs.yarn_cache_dir }}
+            ${{ needs.cache-deps.outputs.yarn_cache_dir }}
             ~/.cache/Cypress
           key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
           restore-keys: yarn-v1-
+      - run: yarn --frozen-lockfile
       - uses: chromaui/action@v1
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           token: ${{ secrets.GITHUB_TOKEN }}
   e2e:
-    needs: install-deps
+    needs: cache-deps
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -88,11 +88,13 @@ jobs:
         id: yarn-cache
         with:
           path: |
-            ${{ needs.install-deps.outputs.yarn_cache_dir }}
+            ${{ needs.cache-deps.outputs.yarn_cache_dir }}
             ~/.cache/Cypress
           key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
           restore-keys: yarn-v1-
+      - run: yarn --frozen-lockfile
       - name: Cypress run
         uses: cypress-io/github-action@v4
         with:
           start: yarn dev
+          install: false
