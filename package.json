@@ -30,7 +30,7 @@
     "build-storybook": "storybook build",
     "init-msw": "msw init public/",
     "test-storybook": "test-storybook",
-    "chromatic": "npx chromatic --project-token=chpt_bdb539534db4de6"
+    "cypress": "cypress open"
   },
   "devDependencies": {
     "@storybook/addon-a11y": "^7.0.0",
@@ -46,7 +46,9 @@
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react": "^3.1.0",
+    "axe-playwright": "^2.0.1",
     "chromatic": "^11.3.0",
+    "cypress": "^13.7.2",
     "msw": "^1.2.1",
     "msw-storybook-addon": "^1.10.0",
     "prop-types": "^15.8.1",
