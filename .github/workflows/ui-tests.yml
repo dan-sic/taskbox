@@ -6,15 +6,43 @@ on: push
 
 # List of jobs
 jobs:
+  install-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+      - name: Cache deps
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            ~/.cache/Cypress
+          key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: yarn-v1-
+      - name: Install deps
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: yarn
+
   interaction-and-accessibility:
+    needs: install-deps
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
           node-version: "16.x"
-      - name: Install deps
-        run: yarn
+      - name: Cache deps
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            ~/.cache/Cypress
+          key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: yarn-v1-
       - name: Install Playwright
         run: npx playwright install --with-deps
       - name: Build Storybook
@@ -24,22 +52,39 @@ jobs:
           "npx http-server storybook-static --port 6006 --silent"
           "npx wait-on tcp:6006 && yarn test-storybook"
   visual:
+    needs: install-deps
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - run: yarn
+      - name: Cache deps
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            ~/.cache/Cypress
+          key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: yarn-v1-
       - uses: chromaui/action@v1
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           token: ${{ secrets.GITHUB_TOKEN }}
   e2e:
+    needs: install-deps
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependencies
-        run: yarn
+      - name: Restore deps
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            ~/.cache/Cypress
+          key: yarn-v1-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: yarn-v1-
       - name: Cypress run
         uses: cypress-io/github-action@v4
         with:
